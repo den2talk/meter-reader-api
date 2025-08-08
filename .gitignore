@@ -1,0 +1,40 @@
+# Окружение Python
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*.pyo
+
+# IDE и редакторы
+.idea/
+.vscode/
+
+# Логи, временные файлы
+*.log
+*.tmp
+*.swp
+
+# ОС
+.DS_Store
+Thumbs.db
+
+# Python-specific
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Файлы конфигурации и чувствительные данные
+.env
+.env.*
+
+# Jupyter (если используешь)
+.ipynb_checkpoints/
+
+# Бинарники, если случайно появились
+*.exe
+*.dll
+*.so
+*.dylib
