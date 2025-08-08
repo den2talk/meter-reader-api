@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+clients.yaml
+.idea/# created by virtualenv automatically
+.idea/

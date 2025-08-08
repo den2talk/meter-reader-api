@@ -1,0 +1,21 @@
+@startuml
+actor Client as "Клиент"
+participant REST_Service as "Сервис распознавания"
+participant AI_Gemini as "AI (Gemini)"
+
+Client -> REST_Service: POST /recognize\n(multipart/form-data: phone_number, image)
+note right: Заголовок: X-API-Key: 'your_api_key'
+
+REST_Service -> REST_Service: Валидация API Key
+REST_Service -> REST_Service: Валидация номера телефона и изображения
+
+alt Успешная валидация
+    REST_Service -> AI_Gemini: Запрос на распознавание\n(Image)
+    AI_Gemini --> REST_Service: Ответ с распознанными данными\n(JSON)
+    REST_Service -> REST_Service: Добавление даты и времени распознавания
+    REST_Service --> Client: HTTP 200 OK\n(JSON: phone_number, meter_reading, timestamp)
+else Ошибка валидации
+    REST_Service --> Client: HTTP 400 Bad Request
+end
+
+@enduml

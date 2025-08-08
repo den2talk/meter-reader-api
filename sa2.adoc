@@ -1,0 +1,109 @@
+= Системная аналитика для REST-сервиса распознавания счетчиков
+:toc: left
+:toclevels: 2
+:sectnums:
+:sectnumlevels: 2
+:author: Gemini
+:doctype: article
+
+== Описание сервиса
+Сервис предназначен для распознавания показаний счетчиков (электрических, газовых) на фотографиях. Входные данные: номер телефона и фотография. На выходе — JSON с номером телефона, показаниями и датой/временем распознавания.
+
+== Аутентификация
+Для аутентификации используется **API Key**. Каждый клиент должен предоставить свой уникальный ключ в заголовке `X-API-Key` каждого запроса.
+
+== Валидация входных данных
+Сервис выполняет следующие проверки:
+* **Номер телефона**: Должен быть в формате +7 (999) 999-99-99 или другом стандартном международном формате.
+* **Изображение**: Файл должен быть в формате JPEG, PNG или другом поддерживаемом формате изображений, и его размер не должен превышать 10 МБ.
+* **Заголовок аутентификации**: Должен присутствовать заголовок `X-API-Key`.
+
+== Диаграмма последовательности
+[plantuml, diagram, svg]
+....
+@startuml
+actor Client as "Клиент"
+participant REST_Service as "Сервис распознавания"
+participant AI_Gemini as "AI (Gemini)"
+
+Client -> REST_Service: POST /recognize\n(multipart/form-data: phone_number, image)
+note right: Заголовок: X-API-Key: 'your_api_key'
+
+REST_Service -> REST_Service: Валидация API Key
+REST_Service -> REST_Service: Валидация номера телефона и изображения
+
+alt Успешная валидация
+    REST_Service -> AI_Gemini: Запрос на распознавание\n(Image)
+    AI_Gemini --> REST_Service: Ответ с распознанными данными\n(JSON)
+    REST_Service -> REST_Service: Добавление даты и времени распознавания
+    REST_Service --> Client: HTTP 200 OK\n(JSON: phone_number, meter_reading, timestamp)
+else Ошибка валидации
+    REST_Service --> Client: HTTP 400 Bad Request
+end
+
+@enduml
+....
+
+== OpenAPI контракт
+[source, yaml]
+....
+openapi: 3.0.0
+info:
+  title: Сервис распознавания счетчиков
+  description: API для распознавания показаний счетчиков на фотографиях
+  version: 1.0.0
+paths:
+  /recognize:
+    post:
+      summary: Распознать показания счетчика
+      description: Отправка фотографии счетчика и номера телефона для распознавания данных.
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                phone_number:
+                  type: string
+                  description: Номер телефона клиента.
+                  example: "+79001234567"
+                  pattern: "^\\+[1-9]\\d{1,14}$" # Стандарт E.164
+                image:
+                  type: string
+                  format: binary
+                  description: Фотография счетчика (электрического или газового).
+      responses:
+        '200':
+          description: Успешное распознавание.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  phone_number:
+                    type: string
+                    example: "+79001234567"
+                  meter_reading:
+                    type: string
+                    description: Показания счетчика.
+                    example: "12345.67"
+                  timestamp:
+                    type: string
+                    format: date-time
+                    description: Дата и время распознавания.
+        '400':
+          description: Ошибка валидации запроса или неверный формат данных.
+        '401':
+          description: Неверный или отсутствующий API Key.
+        '500':
+          description: Внутренняя ошибка сервера.
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+....

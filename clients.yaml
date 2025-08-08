@@ -1,0 +1,4 @@
+clients:
+  client_a: "key_for_client_a"
+  client_b: "key_for_client_b"
+  client_c: "key_for_client_c"
